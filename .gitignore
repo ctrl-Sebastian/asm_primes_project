@@ -1,0 +1,44 @@
+# Keil uVision 5 build outputs
+**/Objects/
+**/Listings/
+**/*.axf
+**/*.elf
+**/*.hex
+**/*.bin
+**/*.map
+**/*.lst
+**/*.plg
+**/*.tra
+**/*.bak
+**/*.dep
+**/*.iex
+**/*.htm
+**/*.log
+**/*.sct
+**/*.o
+**/*.obj
+
+# IDE-specific files
+**/*.uvguix.*
+**/*.uvoptx
+**/*.uvgui.*
+**/*.uvproj.bak
+**/*.uvgui.bak
+
+# Debug and auto-generated folders
+**/DebugConfig/
+**/RTE/
+
+# User-specific files
+*.swp
+*.swo
+*.user
+*.tmp
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Python/VSCode (if used)
+__pycache__/
+.vscode/
