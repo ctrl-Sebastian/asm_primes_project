@@ -3,14 +3,15 @@ GPIO_B_BASE		EQU		0x48000400
 RCC_BASE		EQU		0x40021000
 	
 GPIO_MODER		equ		0x00
-GPIO_IDR		equ		0x10
 GPIO_ODR		equ		0x14
 	
 RCC_AHB2ENR		equ		0x4C
 	
 result			SPACE	40			; where the result array of primes is going to be stored
-size_of_result 	dcd		0			; to increase as a counter
-	
+size_of_result 	dcd		0x00			; to increase as a counter
+
+; ======================================================================================================
+
 				AREA	readData, DATA, READONLY
 ;						   0	 1	   2	 3	   4	 5	   6	 7	   8	 9
 seg_patterns    DCB     0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F
@@ -20,36 +21,14 @@ digit_select    DCW		0x0E00		; Thousands
                 DCW     0x0B00      ; Tens     (CA3)
                 DCW     0x0700      ; Ones     (CA4)
 				ALIGN
-array			dcd		3, 5, 7, 9999, 20, 23, 100, 97, 98, 90
-size			equ		10
-				
+array			dcd		17, 37, 89, 223, 509, 541, 673, 4021, 7919, 9973, 482, 1001, 6400, 3456, 121, 777, 8888, 9999, 2500, 444
+size			equ		20
+
+; ======================================================================================================
+
 				AREA	myCode, CODE, READONLY
 				EXPORT	__main
 				ENTRY
-
-enable_clock	proc
-	
-				ldr		r2, =RCC_BASE
-				ldr		r1, [r2, #RCC_AHB2ENR]
-				orr		r1, r1, #0x06				;0110	(bit 1 & bit 2)
-				str		r1, [r2, #RCC_AHB2ENR]
-				bx		lr
-
-				endp
-
-setup_gpio		proc
-	
-				;		configuring port b 12 pins as output
-				ldr		r0, =GPIO_B_BASE
-				ldr		r1, [r0, #GPIO_MODER]
-				ldr		r2, =0x00FFFFFF
-				bic		r1, r1, r2
-				ldr		r2, =0x00555555
-				orr		r1, r1, r2
-				str		r1, [r0, #GPIO_MODER]
-				
-				bx		lr
-				endp
 
 __main			proc
 
@@ -62,6 +41,10 @@ __main			proc
 				mov		r1, #0			; true or false
 				mov		r2, #0			; counter i = 0
 				ldr		r4, =size_of_result
+				
+				ldr		r5, =0
+				str		r5, [r4]			; storing 0 in the result array size variable
+				
 				ldr 	r12, =array
 				ldr		r11, =result
 loop
@@ -79,7 +62,7 @@ true			str		r0, [r11], #4
 				str		r5, [r4]
 false
 				add		r2, #1					; ++i
-				cmp		r2, #10
+				cmp		r2, #size
 				blt		loop
 				
 				
@@ -124,6 +107,8 @@ mux_1sec        mov     r0, sp
 				b		display_loop
 				endp
 
+; ======================================================================================================
+
 display_blank	proc
 				ldr     r0, =GPIO_B_BASE
                 ldr     r1, =0x00000FFF
@@ -134,6 +119,8 @@ display_blank	proc
                 str     r2, [r0, #GPIO_ODR]
                 bx      lr
 				endp
+					
+; ======================================================================================================
 
 display_number	proc
 				push    {r4-r8, lr}
@@ -177,9 +164,12 @@ mux_loop		cmp		r5, #3
 						
 mux_finish		pop 	{r4-r8, pc}			
 				endp
+; ======================================================================================================
+
 
 ; calc digits return by registers
 ; r0 holding the number to display
+; ======================================================================================================
 calc_digits		proc
 				push	{r4, r5, lr}
 				
@@ -210,10 +200,11 @@ calc_10s		cmp		r4, #10
 done_calc		mov		r3, r4
 				pop		{r4, r5, pc}
 				endp
-	
+; ======================================================================================================
 
 ;	isPrime Function
-;	-----------------
+; ======================================================================================================
+
 isPrime			PROC
 				push	{r4-r8, lr}		; sp drops by 24
 				
@@ -223,9 +214,9 @@ isPrime			PROC
 				cmp		r4, r5			; if n < 2 return false
 				blt		return_false	;
 				
-;	SQRT FUNCTION
-;	-------------
-				
+; 	sqrt function
+; 	-------------
+
 				mov		r6, #0
 calc_sqrt		mul		r7, r6, r6
 				cmp		r7, r4
@@ -258,7 +249,33 @@ return_false	ldr		r1, =0
 				str		r1, [sp, #28]
 				pop		{r4-r8, pc}
 				ENDP
+; ======================================================================================================
 
+enable_clock	proc
+	
+				ldr		r2, =RCC_BASE
+				ldr		r1, [r2, #RCC_AHB2ENR]
+				orr		r1, r1, #0x06				;0110	(bit 1 & bit 2)
+				str		r1, [r2, #RCC_AHB2ENR]
+				bx		lr
+
+				endp
+
+setup_gpio		proc
+	
+				;		configuring port b 12 pins as output
+				ldr		r0, =GPIO_B_BASE
+				ldr		r1, [r0, #GPIO_MODER]
+				ldr		r2, =0x00FFFFFF
+				bic		r1, r1, r2
+				ldr		r2, =0x00555555
+				orr		r1, r1, r2
+				str		r1, [r0, #GPIO_MODER]
+				
+				bx		lr
+				endp
+
+; ======================================================================================================
 
 ;		delays
 
